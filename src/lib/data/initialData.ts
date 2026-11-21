@@ -8,7 +8,7 @@ export const initialPortfolioData: PortfolioData = {
     credential: "B.Tech CSE (AI & ML) // Available for Sprints",
     subHeadline: "ENGINEERING HIGH-THROUGHPUT DISTRIBUTED SYSTEMS, FOUNDATION MODELS & COMPUTATIONAL NEUROSCIENCE",
     aboutBio: "I am Anil Kumar Rout (Anil404), a Software Engineer and AI Researcher pursuing B.Tech in Computer Science and Engineering with a specialization in Artificial Intelligence & Machine Learning. My work converges at the intersection of deep generative models, scalable distributed architectures, and computational neuroscience. Driven by building resilient, autonomous systems that solve high-dimensional complexity.",
-    avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDZAE5gRpeqaIGuoA7ysi889vzpxyml1Wx1Y0KWOtrekyAd7mPpcC0Z6F1Qw0vHcTwmTelNWlbcRPEryc_nMzdPjkmaqFutd92c3HzLX2AybdqRT0cSP8WZkjFboxgxSYHypMdwWpunTvHH20RLhLNJNFQhnKATtUxtM2cRUaw3kZncZ_fp2sY6u7LLwIYiuMKKw0qBH8t424FljruOy2x3Jhjk01bfWcNI3h4aIYi1",
+    avatarUrl: "https://lh3.googleusercontent.com/aida/ALJJyrC3PFGKDFq7-ISaWez-idAkXjFXaDifIgVp5e5DXwIFLyqW1ypvr3g7fwK1ywNEhJtvOGW7ePtVqykRU1qMFimWjDWfsxqJJIJmWpnk-MVCQIylPfHkiq-AxS-WsOK259XcIqXKe3QGeqxq0ApEZ19LMnKdUbzFjeRhK2GrKDl3qhssAJyjoU4h8C5w7-IHOryRNc6dsChIrmxuQa5SMIdwQjySC-Vf6oqsDMR1CZ8I2g",
     email: "anil@neuralmesh.dev",
     location: "Bhubaneswar / Remote",
     stats: [
