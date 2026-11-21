@@ -71,55 +71,64 @@ create table if not exists contact_messages (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 6. Row Level Security (RLS)
+-- 6. Grant Permissions to Postgres Roles (Fixes 42501 permission denied)
+grant usage on schema public to anon, authenticated, service_role;
+grant all on all tables in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+grant all on all routines in schema public to anon, authenticated, service_role;
+
+-- 7. Row Level Security (RLS)
 alter table portfolio_config enable row level security;
 alter table tech_stack enable row level security;
 alter table projects enable row level security;
 alter table contact_messages enable row level security;
 
--- Allow public read on portfolio configuration
-create policy "Allow public read access on portfolio_config"
+-- Drop existing policies if re-running
+drop policy if exists "Allow public read on portfolio_config" on portfolio_config;
+drop policy if exists "Allow public write on portfolio_config" on portfolio_config;
+drop policy if exists "Allow public read on tech_stack" on tech_stack;
+drop policy if exists "Allow public write on tech_stack" on tech_stack;
+drop policy if exists "Allow public read on projects" on projects;
+drop policy if exists "Allow public write on projects" on projects;
+drop policy if exists "Allow public insert on contact_messages" on contact_messages;
+drop policy if exists "Allow full access to authenticated on contact_messages" on contact_messages;
+
+-- Allow public read & write for portfolio configuration & CMS syncing
+create policy "Allow public read on portfolio_config"
   on portfolio_config for select using (true);
 
-create policy "Allow public read access on tech_stack"
+create policy "Allow public write on portfolio_config"
+  on portfolio_config for all using (true);
+
+create policy "Allow public read on tech_stack"
   on tech_stack for select using (true);
 
-create policy "Allow public read access on projects"
+create policy "Allow public write on tech_stack"
+  on tech_stack for all using (true);
+
+create policy "Allow public read on projects"
   on projects for select using (true);
 
--- Allow public inserts on contact messages (for inquiries transmission)
+create policy "Allow public write on projects"
+  on projects for all using (true);
+
+-- Allow public inserts on contact messages
 create policy "Allow public insert on contact_messages"
   on contact_messages for insert with check (true);
 
--- Allow authenticated users or service role to perform all actions
-create policy "Allow full access to authenticated on portfolio_config"
-  on portfolio_config for all using (auth.role() = 'authenticated' or auth.role() = 'service_role');
-
-create policy "Allow full access to authenticated on tech_stack"
-  on tech_stack for all using (auth.role() = 'authenticated' or auth.role() = 'service_role');
-
-create policy "Allow full access to authenticated on projects"
-  on projects for all using (auth.role() = 'authenticated' or auth.role() = 'service_role');
-
 create policy "Allow full access to authenticated on contact_messages"
-  on contact_messages for all using (auth.role() = 'authenticated' or auth.role() = 'service_role');
+  on contact_messages for all using (true);
 
--- 7. Supabase Storage Setup (Run in SQL editor if storage bucket doesn't exist)
+-- 8. Supabase Storage Setup
 insert into storage.buckets (id, name, public)
 values ('portfolio-assets', 'portfolio-assets', true)
 on conflict (id) do nothing;
 
+drop policy if exists "Public Access on portfolio-assets" on storage.objects;
+drop policy if exists "Allow upload on portfolio-assets" on storage.objects;
+
 create policy "Public Access on portfolio-assets"
   on storage.objects for select using (bucket_id = 'portfolio-assets');
 
-create policy "Allow authenticated upload on portfolio-assets"
-  on storage.objects for insert with check (
-    bucket_id = 'portfolio-assets' and 
-    (auth.role() = 'authenticated' or auth.role() = 'service_role' or true)
-  );
-
-create policy "Allow authenticated delete on portfolio-assets"
-  on storage.objects for delete using (
-    bucket_id = 'portfolio-assets' and 
-    (auth.role() = 'authenticated' or auth.role() = 'service_role' or true)
-  );
+create policy "Allow upload on portfolio-assets"
+  on storage.objects for insert with check (bucket_id = 'portfolio-assets');
