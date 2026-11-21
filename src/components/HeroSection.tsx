@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePortfolio } from '@/lib/context/PortfolioContext';
 
-export function HeroSection({ onOpenLiveCms }: { onOpenLiveCms?: () => void }) {
+export function HeroSection() {
   const { data } = usePortfolio();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const avatarWrapRef = useRef<HTMLDivElement>(null);
@@ -47,16 +47,6 @@ export function HeroSection({ onOpenLiveCms }: { onOpenLiveCms?: () => void }) {
 
         {/* Action Pills */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {onOpenLiveCms && (
-            <button
-              onClick={onOpenLiveCms}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[#24252a] hover:bg-[#2f3037] text-white font-mono text-xs uppercase tracking-wider transition-all border border-white/[0.08]"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#e2b6ff]">edit_note</span>
-              <span>Quick Edit</span>
-            </button>
-          )}
-
           {githubSocial && (
             <a
               href={githubSocial.url}

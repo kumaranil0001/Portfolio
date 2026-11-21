@@ -4,11 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePortfolio } from '@/lib/context/PortfolioContext';
 
-interface NavbarProps {
-  onOpenLiveCms?: () => void;
-}
-
-export function Navbar({ onOpenLiveCms }: NavbarProps) {
+export function Navbar() {
   const { data } = usePortfolio();
   const [socialsOpen, setSocialsOpen] = useState(false);
 
@@ -101,17 +97,6 @@ export function Navbar({ onOpenLiveCms }: NavbarProps) {
             <span className="material-symbols-outlined text-[15px]">admin_panel_settings</span>
             <span className="hidden sm:inline">ADMIN CMS</span>
           </Link>
-
-          {/* Quick Drawer trigger */}
-          {onOpenLiveCms && (
-            <button
-              onClick={onOpenLiveCms}
-              className="w-9 h-9 rounded-full bg-white text-[#0c0c0c] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-md"
-              title="Open Quick Edit Drawer"
-            >
-              <span className="material-symbols-outlined text-[18px]">tune</span>
-            </button>
-          )}
         </div>
       </div>
     </header>
