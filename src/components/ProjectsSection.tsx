@@ -145,7 +145,7 @@ export function ProjectsSection() {
   return (
     <section 
       id="projects" 
-      className="relative w-full bg-[#0c0c0c] rounded-t-[32px] sm:rounded-t-[48px] -mt-8 py-16 sm:py-20 md:py-24 px-4 sm:px-8 lg:px-12 z-30"
+      className="relative w-full bg-[#0c0c0c] py-16 sm:py-20 md:py-24 px-4 sm:px-8 lg:px-12 z-20"
     >
       <div className="max-w-[1360px] mx-auto flex flex-col">
         {/* Section Header */}
