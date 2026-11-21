@@ -36,6 +36,28 @@ export default function AdminDashboardPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Authenticated user state & session check
+  const [currentUser, setCurrentUser] = useState<string>('Superuser');
+  const [authChecked, setAuthChecked] = useState(false);
+
+  React.useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/session');
+        const sessionData = await res.json();
+        if (!res.ok || !sessionData.authenticated) {
+          router.push('/admin/login');
+        } else {
+          setCurrentUser(sessionData.user?.email || sessionData.user?.id || 'superuser');
+          setAuthChecked(true);
+        }
+      } catch {
+        router.push('/admin/login');
+      }
+    }
+    checkAuth();
+  }, [router]);
+
   const showToast = (msg: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToastMessage(msg);
@@ -210,6 +232,61 @@ export default function AdminDashboardPage() {
     reader.readAsText(file);
   };
 
+  // Password change state & handler
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!oldPassword || !newPassword) {
+      showToast("Current and new password are required.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast("New password and confirm password do not match.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      showToast("New password must be at least 6 characters.");
+      return;
+    }
+
+    setPasswordChangeLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword, newPassword })
+      });
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        showToast(resData.message || "Admin password updated successfully!");
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        showToast("Error: " + (resData.error || "Failed to update password"));
+      }
+    } catch {
+      showToast("Network error contacting security gateway.");
+    } finally {
+      setPasswordChangeLoading(false);
+    }
+  };
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center font-mono text-sm text-[#e2b6ff]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#e2b6ff] border-t-transparent rounded-full animate-spin" />
+          <span className="uppercase tracking-widest text-xs">Authenticating Session Gateway...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0c0c0c] text-[#e5e2e1] antialiased flex flex-col lg:flex-row selection:bg-[#6b0fa6] selection:text-white">
       {/* Toast Notification */}
@@ -367,13 +444,13 @@ export default function AdminDashboardPage() {
           </Link>
 
           <div className="flex items-center justify-between px-2 font-mono text-[10px] text-[#8d9194]">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3ECF8E]" />
-              AUTH: OK (SUPERUSER)
+            <span className="flex items-center gap-1.5 truncate max-w-[160px]" title={currentUser}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#3ECF8E] shrink-0" />
+              <span className="truncate">USER: {currentUser}</span>
             </span>
             <button
               onClick={handleLogout}
-              className="hover:text-red-400 transition-colors uppercase tracking-wider font-semibold"
+              className="hover:text-red-400 transition-colors uppercase tracking-wider font-semibold shrink-0"
             >
               Logout
             </button>
@@ -1370,6 +1447,85 @@ export default function AdminDashboardPage() {
                     </label>
                   </div>
                 </div>
+              </div>
+
+              {/* Owner Security & Password Management Card */}
+              <div className="p-8 rounded-3xl bg-[#141517] border border-red-500/20 flex flex-col gap-5 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-red-400 text-2xl">lock</span>
+                    <div>
+                      <h3 className="font-display font-bold text-xl text-white">
+                        Owner Security & Admin Password
+                      </h3>
+                      <span className="font-mono text-xs text-[#8d9194]">
+                        Single-Operator Access: Anil Kumar Rout (anilcollage001@gmail.com / Anil404)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 font-mono text-[10px] font-bold uppercase tracking-wider border border-red-500/30 self-start sm:self-auto">
+                    PROTECTED GATEWAY
+                  </span>
+                </div>
+
+                <p className="font-body text-xs sm:text-sm text-[#8d9194] leading-relaxed">
+                  Update your personal admin passkey. The change takes effect immediately on disk and in memory. Only you can log in to modify this portfolio.
+                </p>
+
+                <form onSubmit={handleChangePassword} className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-mono text-xs text-[#8d9194] uppercase tracking-wider">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-sm border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#e2b6ff]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-mono text-xs text-[#8d9194] uppercase tracking-wider">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Minimum 6 characters"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-sm border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#e2b6ff]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-mono text-xs text-[#8d9194] uppercase tracking-wider">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-sm border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#e2b6ff]"
+                    />
+                  </div>
+
+                  <div className="md:col-span-3 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={passwordChangeLoading}
+                      className="px-6 py-3 rounded-full bg-red-500 hover:bg-red-600 active:scale-95 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-[0_0_16px_rgba(239,68,68,0.3)] disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">key</span>
+                      <span>{passwordChangeLoading ? 'UPDATING PASSKEY...' : 'UPDATE ADMIN PASSWORD'}</span>
+                    </button>
+                  </div>
+                </form>
               </div>
 
               {/* Vercel Hosting Guide Card */}
