@@ -36,7 +36,7 @@ interface PortfolioContextType {
   importFromJson: (jsonStr: string) => boolean;
 }
 
-const STORAGE_KEY = 'anil404_portfolio_data_v4';
+const STORAGE_KEY = 'anil404_portfolio_data_v5';
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 

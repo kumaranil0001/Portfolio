@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "reset-password": "bun scripts/reset-password.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",

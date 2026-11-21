@@ -6,12 +6,13 @@ import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [identity, setIdentity] = useState('anilcollage001@gmail.com');
+  const [identity, setIdentity] = useState('anilkumarrout2005@gmail.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +75,7 @@ export default function AdminLoginPage() {
             Private Admin Console
           </h2>
           <p className="font-body text-xs sm:text-sm text-[#8d9194] mt-1 leading-relaxed">
-            Restricted terminal for Anil Kumar Rout (Anil404). Only the authorized portfolio owner can modify content, stack, and projects.
+            Restricted terminal for Anil Kumar Rout (anilkumarrout2005@gmail.com). Only the authorized portfolio owner can modify content, stack, and projects.
           </p>
         </div>
 
@@ -103,15 +104,24 @@ export default function AdminLoginPage() {
               required
               value={identity}
               onChange={(e) => setIdentity(e.target.value)}
-              placeholder="anilcollage001@gmail.com or anil404"
+              placeholder="anilkumarrout2005@gmail.com or anil404"
               className="w-full px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.06] transition-all"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-mono text-xs uppercase tracking-wider text-[#8d9194]">
-              Security Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="font-mono text-xs uppercase tracking-wider text-[#8d9194]">
+                Security Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-[11px] font-mono text-[#e2b6ff] hover:underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -156,6 +166,67 @@ export default function AdminLoginPage() {
           </span>
         </div>
       </div>
+
+      {/* Forgot Password Recovery Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="w-full max-w-lg p-7 rounded-3xl bg-[#141517] border border-white/[0.1] shadow-2xl flex flex-col gap-5 text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[#e2b6ff] text-2xl">vpn_key</span>
+                <h3 className="font-display font-bold text-xl text-white">
+                  Owner Password Recovery
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowForgotModal(false)}
+                className="w-8 h-8 rounded-full bg-[#1c1d21] hover:bg-[#282a30] flex items-center justify-center text-white"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <p className="font-body text-xs sm:text-sm text-[#8d9194] leading-relaxed">
+              Because this is a private single-owner portfolio, your password is controlled directly by you in your secure project configuration. If you forgot your password, you can reset it in 2 simple ways:
+            </p>
+
+            <div className="flex flex-col gap-3 font-mono text-xs">
+              {/* Option 1 */}
+              <div className="p-4 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex flex-col gap-1.5">
+                <span className="text-[#3ECF8E] font-bold">METHOD 1: Instant Terminal Reset</span>
+                <p className="text-[#8d9194]">Run this single command in your project terminal to set a new password:</p>
+                <code className="p-2.5 rounded-xl bg-[#0c0c0c] text-[#e2b6ff] select-all">
+                  bun run reset-password &lt;your_new_password&gt;
+                </code>
+              </div>
+
+              {/* Option 2 */}
+              <div className="p-4 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex flex-col gap-1.5">
+                <span className="text-[#e2b6ff] font-bold">METHOD 2: Edit Environment File (.env.local)</span>
+                <p className="text-[#8d9194]">Open the <span className="text-white">.env.local</span> file in your project code editor and update:</p>
+                <code className="p-2.5 rounded-xl bg-[#0c0c0c] text-white select-all">
+                  ADMIN_SECRET_KEY=your_new_password
+                </code>
+              </div>
+
+              {/* Option 3 */}
+              <div className="p-4 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex flex-col gap-1.5">
+                <span className="text-orange-400 font-bold">METHOD 3: On Vercel (When Deployed)</span>
+                <p className="text-[#8d9194]">
+                  In your Vercel Dashboard → Project Settings → <strong>Environment Variables</strong> → update <strong>ADMIN_SECRET_KEY</strong>.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowForgotModal(false)}
+              className="w-full py-3 rounded-full bg-[#1c1d21] hover:bg-[#282a30] text-white font-mono text-xs uppercase tracking-wider font-semibold border border-white/[0.08]"
+            >
+              Close Recovery Guide
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

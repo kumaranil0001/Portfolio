@@ -1459,7 +1459,7 @@ export default function AdminDashboardPage() {
                         Owner Security & Admin Password
                       </h3>
                       <span className="font-mono text-xs text-[#8d9194]">
-                        Single-Operator Access: Anil Kumar Rout (anilcollage001@gmail.com / Anil404)
+                        Single-Operator Access: Anil Kumar Rout (anilkumarrout2005@gmail.com / Anil404)
                       </span>
                     </div>
                   </div>

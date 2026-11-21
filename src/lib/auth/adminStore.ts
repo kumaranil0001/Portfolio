@@ -6,7 +6,7 @@ const CONFIG_FILE = path.join(process.cwd(), '.admin-secret.json');
 const ENV_FILE = path.join(process.cwd(), '.env.local');
 
 // Primary owner credentials
-export const OWNER_EMAIL = 'anilcollage001@gmail.com';
+export const OWNER_EMAIL = 'anilkumarrout2005@gmail.com';
 export const OWNER_MONIKER = 'anil404';
 
 // Check if identity belongs to the portfolio owner
@@ -17,6 +17,7 @@ export function isOwnerIdentity(identity: string): boolean {
   
   return (
     clean === OWNER_EMAIL.toLowerCase() ||
+    clean === 'anilcollage001@gmail.com' || // legacy backup alias
     clean === OWNER_MONIKER.toLowerCase() ||
     clean === configuredEmail ||
     clean === 'admin'
@@ -100,7 +101,7 @@ export async function verifyOwnerCredentials(identity: string, password: string)
   if (!isOwnerIdentity(identity)) {
     return {
       allowed: false,
-      error: 'Access Denied: This is the private portfolio of Anil Kumar Rout (Anil404). Only the portfolio owner is authorized to access the control center.'
+      error: `Access Denied: This is the private portfolio of Anil Kumar Rout (${OWNER_EMAIL}). Only the portfolio owner is authorized to access the control center.`
     };
   }
 

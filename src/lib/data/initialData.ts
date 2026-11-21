@@ -9,7 +9,7 @@ export const initialPortfolioData: PortfolioData = {
     subHeadline: "ENGINEERING HIGH-THROUGHPUT DISTRIBUTED SYSTEMS, FOUNDATION MODELS & COMPUTATIONAL NEUROSCIENCE",
     aboutBio: "I am Anil Kumar Rout (Anil404), a Software Engineer and AI Researcher pursuing B.Tech in Computer Science and Engineering with a specialization in Artificial Intelligence & Machine Learning. My work converges at the intersection of deep generative models, scalable distributed architectures, and computational neuroscience. Driven by building resilient, autonomous systems that solve high-dimensional complexity.",
     avatarUrl: "https://lh3.googleusercontent.com/aida/ALJJyrC3PFGKDFq7-ISaWez-idAkXjFXaDifIgVp5e5DXwIFLyqW1ypvr3g7fwK1ywNEhJtvOGW7ePtVqykRU1qMFimWjDWfsxqJJIJmWpnk-MVCQIylPfHkiq-AxS-WsOK259XcIqXKe3QGeqxq0ApEZ19LMnKdUbzFjeRhK2GrKDl3qhssAJyjoU4h8C5w7-IHOryRNc6dsChIrmxuQa5SMIdwQjySC-Vf6oqsDMR1CZ8I2g",
-    email: "anilcollage001@gmail.com",
+    email: "anilkumarrout2005@gmail.com",
     location: "Bhubaneswar / Remote",
     stats: [
       { label: "B.Tech", value: "CSE (AI & ML)" },
