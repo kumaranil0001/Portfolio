@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [identity, setIdentity] = useState('anilkumarrout2005@gmail.com');
+  const [identity, setIdentity] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setSuccessMsg(data.message || 'Identity confirmed. Welcome back, Anil.');
+        setSuccessMsg(data.message || 'Identity verified. Access granted.');
         setTimeout(() => {
           router.push('/admin');
         }, 500);
@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
             </div>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 font-mono text-[9px] font-bold uppercase tracking-wider border border-red-500/20">
-            OWNER ONLY
+            RESTRICTED
           </span>
         </div>
 
@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
             Private Admin Console
           </h2>
           <p className="font-body text-xs sm:text-sm text-[#8d9194] mt-1 leading-relaxed">
-            Restricted terminal for Anil Kumar Rout (anilkumarrout2005@gmail.com). Only the authorized portfolio owner can modify content, stack, and projects.
+            Restricted administrative gateway. Authorized personnel only. All access attempts are verified and recorded.
           </p>
         </div>
 
@@ -97,14 +97,15 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="font-mono text-xs uppercase tracking-wider text-[#8d9194]">
-              Owner Identity (Email / Moniker)
+              Administrator ID / Email
             </label>
             <input
               type="text"
               required
               value={identity}
               onChange={(e) => setIdentity(e.target.value)}
-              placeholder="anilkumarrout2005@gmail.com or anil404"
+              placeholder="Enter your email or moniker"
+              autoComplete="username"
               className="w-full px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.06] transition-all"
             />
           </div>
@@ -128,7 +129,8 @@ export default function AdminLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your security passkey"
+                placeholder="••••••••••••"
+                autoComplete="current-password"
                 className="w-full px-4 py-3 pr-11 rounded-xl bg-[#1c1d21] text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.06] transition-all"
               />
               <button
@@ -175,7 +177,7 @@ export default function AdminLoginPage() {
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-[#e2b6ff] text-2xl">vpn_key</span>
                 <h3 className="font-display font-bold text-xl text-white">
-                  Owner Password Recovery
+                  Admin Passkey Recovery
                 </h3>
               </div>
               <button
@@ -187,34 +189,34 @@ export default function AdminLoginPage() {
             </div>
 
             <p className="font-body text-xs sm:text-sm text-[#8d9194] leading-relaxed">
-              Because this is a private single-owner portfolio, your password is controlled directly by you in your secure project configuration. If you forgot your password, you can reset it in 2 simple ways:
+              Because this is a private single-operator terminal, credentials cannot be reset publicly. If you forgot your password, choose one of these recovery methods:
             </p>
 
             <div className="flex flex-col gap-3 font-mono text-xs">
               {/* Option 1 */}
               <div className="p-4 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex flex-col gap-1.5">
-                <span className="text-[#3ECF8E] font-bold">METHOD 1: Instant Terminal Reset</span>
-                <p className="text-[#8d9194]">Run this single command in your project terminal to set a new password:</p>
-                <code className="p-2.5 rounded-xl bg-[#0c0c0c] text-[#e2b6ff] select-all">
-                  bun run reset-password &lt;your_new_password&gt;
-                </code>
+                <span className="text-[#3ECF8E] font-bold">METHOD 1: In Production (Vercel)</span>
+                <p className="text-[#8d9194]">
+                  Go to your <span className="text-white">Vercel Dashboard → Project Settings → Environment Variables</span>, edit <span className="text-[#e2b6ff]">ADMIN_SECRET_KEY</span> to your new password, and redeploy.
+                </p>
               </div>
 
               {/* Option 2 */}
               <div className="p-4 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex flex-col gap-1.5">
-                <span className="text-[#e2b6ff] font-bold">METHOD 2: Edit Environment File (.env.local)</span>
-                <p className="text-[#8d9194]">Open the <span className="text-white">.env.local</span> file in your project code editor and update:</p>
-                <code className="p-2.5 rounded-xl bg-[#0c0c0c] text-white select-all">
-                  ADMIN_SECRET_KEY=your_new_password
+                <span className="text-[#e2b6ff] font-bold">METHOD 2: Terminal Reset (Local)</span>
+                <p className="text-[#8d9194]">Run this command in your project terminal to set a new password:</p>
+                <code className="p-2.5 rounded-xl bg-[#0c0c0c] text-[#e2b6ff] select-all">
+                  bun run reset-password &lt;new_password&gt;
                 </code>
               </div>
 
               {/* Option 3 */}
               <div className="p-4 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex flex-col gap-1.5">
-                <span className="text-orange-400 font-bold">METHOD 3: On Vercel (When Deployed)</span>
-                <p className="text-[#8d9194]">
-                  In your Vercel Dashboard → Project Settings → <strong>Environment Variables</strong> → update <strong>ADMIN_SECRET_KEY</strong>.
-                </p>
+                <span className="text-orange-400 font-bold">METHOD 3: Environment File (.env.local)</span>
+                <p className="text-[#8d9194]">Open your local <span className="text-white">.env.local</span> file and change:</p>
+                <code className="p-2.5 rounded-xl bg-[#0c0c0c] text-white select-all">
+                  ADMIN_SECRET_KEY=your_new_password
+                </code>
               </div>
             </div>
 
