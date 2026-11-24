@@ -2,21 +2,70 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePortfolio } from '@/lib/context/PortfolioContext';
 
 export function Navbar() {
   const { data } = usePortfolio();
   const [socialsOpen, setSocialsOpen] = useState(false);
 
+  const brandTitle = data.profile.brandTitle || data.profile.moniker || 'ANIL404';
+  const rawSubtitle = data.profile.brandSubtitle !== undefined ? data.profile.brandSubtitle : 'AI & SOFTWARE';
+  const formattedSubtitle = rawSubtitle.trim()
+    ? (rawSubtitle.trim().startsWith('/') ? rawSubtitle.trim() : `/ ${rawSubtitle.trim()}`)
+    : '';
+  const logoColor = data.profile.logoColor || '#e2b6ff';
+
   return (
     <header className="fixed top-0 w-full z-50 bg-[#0c0c0c]/85 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_1px_16px_rgba(0,0,0,0.5)]">
       <div className="h-20 w-full px-4 sm:px-8 lg:px-16 flex items-center justify-between max-w-[1800px] mx-auto">
         {/* Brand */}
         <Link href="/#hero" className="flex items-center gap-3 group">
-          <span className="w-3 h-3 rounded-full bg-[#e2b6ff] shadow-[0_0_12px_#e2b6ff] group-hover:scale-125 transition-transform" />
-          <span className="font-display text-xl sm:text-2xl tracking-tight text-white font-bold uppercase">
-            {data.profile.moniker || 'ANIL404'}{' '}
-            <span className="text-[#8d9194] font-light text-base sm:text-lg">/ AI & SOFTWARE</span>
+          {data.profile.logoType === 'stylish-a' ? (
+            <div className="w-8 h-8 relative rounded-xl overflow-hidden border border-[#e2b6ff]/40 shadow-[0_0_12px_rgba(226,182,255,0.4)] group-hover:scale-110 transition-transform shrink-0">
+              <Image
+                src="/icon.svg"
+                alt={brandTitle}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : data.profile.logoType === 'image' && data.profile.logoUrl ? (
+            <div className="w-8 h-8 relative rounded-lg overflow-hidden border border-[#e2b6ff]/40 shadow-[0_0_12px_rgba(226,182,255,0.3)] group-hover:scale-110 transition-transform shrink-0">
+              <Image
+                src={data.profile.logoUrl}
+                alt={brandTitle}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : data.profile.logoType === 'icon' && data.profile.logoIcon ? (
+            <span
+              className="material-symbols-outlined text-2xl transition-transform group-hover:scale-110 shrink-0 select-none"
+              style={{
+                color: logoColor,
+                textShadow: `0 0 12px ${logoColor}`
+              }}
+            >
+              {data.profile.logoIcon}
+            </span>
+          ) : (
+            <span
+              className="w-3 h-3 rounded-full group-hover:scale-125 transition-transform shrink-0"
+              style={{
+                backgroundColor: logoColor,
+                boxShadow: `0 0 12px ${logoColor}`
+              }}
+            />
+          )}
+
+          <span className="font-display text-xl sm:text-2xl tracking-tight text-white font-bold uppercase flex items-baseline gap-1.5 flex-wrap">
+            <span>{brandTitle}</span>
+            {formattedSubtitle && (
+              <span className="text-[#8d9194] font-light text-base sm:text-lg">
+                {formattedSubtitle}
+              </span>
+            )}
           </span>
         </Link>
 

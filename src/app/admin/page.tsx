@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePortfolio } from '@/lib/context/PortfolioContext';
-import { ProjectItem, TechStackItem, SocialLink } from '@/lib/data/types';
+import { ProjectItem, TechStackItem, SocialLink, CapabilityDomain, AcademicMilestone } from '@/lib/data/types';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function AdminDashboardPage() {
     data, 
     updateProfile, 
     deleteAvatar,
+    deleteLogo,
     updateSocials,
     updateTechStack,
     addTechStack,
@@ -77,6 +78,125 @@ export default function AdminDashboardPage() {
   const handleProfileSave = () => {
     updateProfile(profileForm);
     showToast("Profile & Hero Identity Synchronized • Revalidated");
+  };
+
+  // Academic & Capabilities form state for Tab 5
+  const [academicForm, setAcademicForm] = useState<AcademicMilestone>(data.academic);
+  const [capabilitiesForm, setCapabilitiesForm] = useState<CapabilityDomain[]>(data.capabilities);
+
+  React.useEffect(() => {
+    setAcademicForm(data.academic);
+  }, [data.academic]);
+
+  React.useEffect(() => {
+    setCapabilitiesForm(data.capabilities);
+  }, [data.capabilities]);
+
+  const handleSkillsAcademicSave = () => {
+    updateAcademic(academicForm);
+    updateCapabilities(capabilitiesForm);
+    showToast("Skills Matrix & Academic Milestones Synchronized • Revalidated");
+  };
+
+  const handleAddCapability = () => {
+    const nextNum = (capabilitiesForm.length + 1).toString().padStart(2, '0');
+    const newCap: CapabilityDomain = {
+      id: `cap_${Date.now()}`,
+      number: nextNum,
+      title: "New Engineering Domain",
+      description: "Core algorithms, distributed routines, and architecture specifications.",
+      tags: ["Systems", "Architecture"],
+      icon: "memory"
+    };
+    const updated = [...capabilitiesForm, newCap];
+    setCapabilitiesForm(updated);
+    updateCapabilities(updated);
+    showToast(`Domain ${nextNum} initialized.`);
+  };
+
+  const handleDeleteCapability = (id: string) => {
+    if (capabilitiesForm.length <= 1) {
+      showToast("Cannot delete the only remaining domain.");
+      return;
+    }
+    const updated = capabilitiesForm.filter(c => c.id !== id);
+    setCapabilitiesForm(updated);
+    updateCapabilities(updated);
+    showToast("Domain removed.");
+  };
+
+  const handleAddCoreFocus = () => {
+    setAcademicForm(prev => ({
+      ...prev,
+      coreFocus: [...(prev.coreFocus || []), "New Core Focus Area"]
+    }));
+  };
+
+  const handleUpdateCoreFocus = (index: number, val: string) => {
+    setAcademicForm(prev => {
+      const copy = [...(prev.coreFocus || [])];
+      copy[index] = val;
+      return { ...prev, coreFocus: copy };
+    });
+  };
+
+  const handleDeleteCoreFocus = (index: number) => {
+    setAcademicForm(prev => {
+      const copy = [...(prev.coreFocus || [])];
+      copy.splice(index, 1);
+      return { ...prev, coreFocus: copy };
+    });
+  };
+
+  const handleAddResearch = () => {
+    setAcademicForm(prev => ({
+      ...prev,
+      researchInitiatives: [...(prev.researchInitiatives || []), "New Research Initiative"]
+    }));
+  };
+
+  const handleUpdateResearch = (index: number, val: string) => {
+    setAcademicForm(prev => {
+      const copy = [...(prev.researchInitiatives || [])];
+      copy[index] = val;
+      return { ...prev, researchInitiatives: copy };
+    });
+  };
+
+  const handleDeleteResearch = (index: number) => {
+    setAcademicForm(prev => {
+      const copy = [...(prev.researchInitiatives || [])];
+      copy.splice(index, 1);
+      return { ...prev, researchInitiatives: copy };
+    });
+  };
+
+  // Website Brand Logo Upload handler (Photo 2)
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    showToast("Uploading brand logo to Supabase Storage...");
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const resData = await res.json();
+      if (res.ok && resData.url) {
+        const nextProfile = { ...profileForm, logoUrl: resData.url, logoType: 'image' as const };
+        updateProfile(nextProfile);
+        setProfileForm(nextProfile);
+        showToast("Brand logo uploaded & active in Navbar!");
+      } else {
+        showToast("Upload failed: " + (resData.error || 'Unknown error'));
+      }
+    } catch {
+      showToast("Error uploading brand logo.");
+    }
   };
 
   // Avatar Upload handler
@@ -308,10 +428,16 @@ export default function AdminDashboardPage() {
           {/* Header Brand */}
           <div className="px-2 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="w-3 h-3 rounded-full bg-[#e2b6ff] shadow-[0_0_12px_#e2b6ff] animate-ping" />
+              <span
+                className="w-3 h-3 rounded-full animate-ping shrink-0"
+                style={{
+                  backgroundColor: data.profile.logoColor || '#e2b6ff',
+                  boxShadow: `0 0 12px ${data.profile.logoColor || '#e2b6ff'}`
+                }}
+              />
               <div className="flex flex-col">
                 <span className="font-display text-lg font-bold text-white tracking-tight">
-                  {data.profile.moniker} CMS
+                  {data.profile.brandTitle || data.profile.moniker} CMS
                 </span>
                 <span className="font-mono text-[10px] text-[#8d9194] uppercase tracking-wider">
                   STUDIO CONTROL CENTER
@@ -616,6 +742,336 @@ export default function AdminDashboardPage() {
                     </h2>
                   </div>
 
+                  {/* FEATURE: WEBSITE BRANDING & NAVBAR IDENTITY (PHOTO 2) */}
+                  <div className="p-6 rounded-2xl bg-[#101114] border border-[#e2b6ff]/30 flex flex-col gap-6 shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#e2b6ff] shadow-[0_0_10px_#e2b6ff]" />
+                          <span className="font-mono text-xs text-[#e2b6ff] uppercase tracking-widest font-bold">
+                            WEBSITE BRANDING & LOGO (NAVBAR IDENTITY)
+                          </span>
+                        </div>
+                        <h3 className="font-display font-bold text-lg text-white mt-1">
+                          Website Name & Header Brand Logo (Photo 2)
+                        </h3>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full bg-[#6b0fa6]/30 text-[#e2b6ff] font-mono text-[10px] font-bold uppercase tracking-wider border border-[#e2b6ff]/20">
+                        Live Navbar Refraction
+                      </span>
+                    </div>
+
+                    {/* Exact Live Navbar Preview (Matching Photo 2) */}
+                    <div className="p-4 rounded-xl bg-[#0c0c0c] border border-white/[0.1] flex flex-col gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-[#8d9194]">
+                        Live Header Preview (As displayed on public website)
+                      </span>
+                      <div className="h-14 px-4 rounded-xl bg-[#141517] border border-white/[0.08] flex items-center gap-3">
+                        {/* Logo Preview */}
+                        {profileForm.logoType === 'stylish-a' ? (
+                          <div className="w-8 h-8 relative rounded-xl overflow-hidden border border-[#e2b6ff]/40 shadow-[0_0_12px_rgba(226,182,255,0.4)] shrink-0">
+                            <Image
+                              src="/icon.svg"
+                              alt="Stylish A Logo"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : profileForm.logoType === 'image' && profileForm.logoUrl ? (
+                          <div className="w-8 h-8 relative rounded-lg overflow-hidden border border-[#e2b6ff]/40 shadow-[0_0_12px_rgba(226,182,255,0.4)] shrink-0">
+                            <Image
+                              src={profileForm.logoUrl}
+                              alt="Logo"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : profileForm.logoType === 'icon' && profileForm.logoIcon ? (
+                          <span
+                            className="material-symbols-outlined text-2xl shrink-0"
+                            style={{
+                              color: profileForm.logoColor || '#e2b6ff',
+                              textShadow: `0 0 12px ${profileForm.logoColor || '#e2b6ff'}`
+                            }}
+                          >
+                            {profileForm.logoIcon}
+                          </span>
+                        ) : (
+                          <span
+                            className="w-3.5 h-3.5 rounded-full shrink-0"
+                            style={{
+                              backgroundColor: profileForm.logoColor || '#e2b6ff',
+                              boxShadow: `0 0 14px ${profileForm.logoColor || '#e2b6ff'}`
+                            }}
+                          />
+                        )}
+
+                        {/* Title & Subtitle Preview */}
+                        <div className="font-display text-xl tracking-tight text-white font-bold uppercase flex items-baseline gap-1.5 flex-wrap">
+                          <span>{profileForm.brandTitle || profileForm.moniker || 'ANIL404'}</span>
+                          <span className="text-[#8d9194] font-light text-base">
+                            {profileForm.brandSubtitle !== undefined && profileForm.brandSubtitle.trim()
+                              ? (profileForm.brandSubtitle.trim().startsWith('/') ? profileForm.brandSubtitle.trim() : `/ ${profileForm.brandSubtitle.trim()}`)
+                              : '/ AI & SOFTWARE'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Brand Name & Subtitle Edit Inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-mono text-xs uppercase tracking-wider text-[#c4c7ca] flex items-center justify-between">
+                          <span>Website Brand Name</span>
+                          <span className="text-[#8d9194] text-[10px]">e.g. ANIL404</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.brandTitle || ''}
+                          placeholder="e.g. ANIL404"
+                          onChange={(e) => setProfileForm({ ...profileForm, brandTitle: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-display font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-mono text-xs uppercase tracking-wider text-[#c4c7ca] flex items-center justify-between">
+                          <span>Website Subtitle / Category</span>
+                          <span className="text-[#8d9194] text-[10px]">e.g. AI & SOFTWARE</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.brandSubtitle || ''}
+                          placeholder="e.g. AI & SOFTWARE"
+                          onChange={(e) => setProfileForm({ ...profileForm, brandSubtitle: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-[#1c1d21] text-[#e2b6ff] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Website Logo Style Chooser */}
+                    <div className="flex flex-col gap-3 pt-2 border-t border-white/[0.06]">
+                      <label className="font-mono text-xs uppercase tracking-wider text-[#c4c7ca]">
+                        Website Logo Mode & Visual Accent
+                      </label>
+
+                      {/* Mode Pills */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setProfileForm({ ...profileForm, logoType: 'stylish-a' })}
+                          className={`py-2.5 px-3 rounded-xl font-mono text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 border ${
+                            profileForm.logoType === 'stylish-a'
+                              ? 'bg-[#24252a] text-white border-[#e2b6ff]/60 font-bold shadow-md'
+                              : 'bg-[#1c1d21] text-[#8d9194] border-white/[0.05] hover:text-white'
+                          }`}
+                        >
+                          <div className="w-4 h-4 relative rounded shrink-0">
+                            <Image src="/icon.svg" alt="A" fill className="object-contain" />
+                          </div>
+                          <span>Stylish "A"</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setProfileForm({ ...profileForm, logoType: 'glow' })}
+                          className={`py-2.5 px-3 rounded-xl font-mono text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 border ${
+                            (!profileForm.logoType || profileForm.logoType === 'glow')
+                              ? 'bg-[#24252a] text-white border-[#e2b6ff]/60 font-bold shadow-md'
+                              : 'bg-[#1c1d21] text-[#8d9194] border-white/[0.05] hover:text-white'
+                          }`}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#e2b6ff] shadow-[0_0_8px_#e2b6ff]" />
+                          <span>Glowing Dot</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setProfileForm({ ...profileForm, logoType: 'image' })}
+                          className={`py-2.5 px-3 rounded-xl font-mono text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 border ${
+                            profileForm.logoType === 'image'
+                              ? 'bg-[#24252a] text-white border-[#e2b6ff]/60 font-bold shadow-md'
+                              : 'bg-[#1c1d21] text-[#8d9194] border-white/[0.05] hover:text-white'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-[#e2b6ff]">image</span>
+                          <span>Image Logo</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setProfileForm({ ...profileForm, logoType: 'icon' })}
+                          className={`py-2.5 px-3 rounded-xl font-mono text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 border ${
+                            profileForm.logoType === 'icon'
+                              ? 'bg-[#24252a] text-white border-[#e2b6ff]/60 font-bold shadow-md'
+                              : 'bg-[#1c1d21] text-[#8d9194] border-white/[0.05] hover:text-white'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-[#e2b6ff]">neurology</span>
+                          <span>Cyber Icon</span>
+                        </button>
+                      </div>
+
+                      {/* Mode 1: Glowing Dot Color Selector */}
+                      {(!profileForm.logoType || profileForm.logoType === 'glow') && (
+                        <div className="p-4 rounded-xl bg-[#1c1d21] border border-white/[0.05] flex flex-col gap-3">
+                          <span className="font-mono text-[11px] text-[#8d9194] uppercase tracking-wider">
+                            Select Glow Color Accent
+                          </span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {[
+                              { label: 'Purple', val: '#e2b6ff' },
+                              { label: 'Cyan', val: '#00F0FF' },
+                              { label: 'Emerald', val: '#3ECF8E' },
+                              { label: 'Amber', val: '#FFB703' },
+                              { label: 'Crimson', val: '#FF0055' },
+                            ].map((preset) => (
+                              <button
+                                key={preset.val}
+                                type="button"
+                                onClick={() => setProfileForm({ ...profileForm, logoColor: preset.val })}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-xs transition-all border ${
+                                  (profileForm.logoColor || '#e2b6ff') === preset.val
+                                    ? 'bg-white/10 text-white border-[#e2b6ff]'
+                                    : 'bg-[#141517] text-[#8d9194] border-white/[0.08] hover:text-white'
+                                }`}
+                              >
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: preset.val, boxShadow: `0 0 8px ${preset.val}` }}
+                                />
+                                <span>{preset.label}</span>
+                              </button>
+                            ))}
+                            <div className="flex items-center gap-1.5 ml-2">
+                              <span className="font-mono text-xs text-[#8d9194]">Custom:</span>
+                              <input
+                                type="color"
+                                value={profileForm.logoColor || '#e2b6ff'}
+                                onChange={(e) => setProfileForm({ ...profileForm, logoColor: e.target.value })}
+                                className="w-8 h-8 rounded-lg bg-transparent cursor-pointer border border-white/[0.1]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mode 2: Custom Image Logo Upload */}
+                      {profileForm.logoType === 'image' && (
+                        <div className="p-4 rounded-xl bg-[#1c1d21] border border-white/[0.05] flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            {profileForm.logoUrl ? (
+                              <div className="w-12 h-12 relative rounded-xl overflow-hidden border border-[#e2b6ff]/40 shadow-md">
+                                <Image
+                                  src={profileForm.logoUrl}
+                                  alt="Custom Logo"
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-[#141517] border border-white/[0.1] flex items-center justify-center text-[#8d9194]">
+                                <span className="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                              </div>
+                            )}
+                            <div className="flex flex-col">
+                              <span className="font-mono text-xs text-white font-bold">
+                                {profileForm.logoUrl ? 'Custom Image Active' : 'No Logo Image Uploaded'}
+                              </span>
+                              <span className="font-mono text-[10px] text-[#8d9194]">
+                                PNG, SVG, or JPG recommended (transparent background)
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <label className="px-4 py-2 rounded-full bg-[#24252a] hover:bg-[#32343c] text-white font-mono text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border border-white/[0.08]">
+                              <span className="material-symbols-outlined text-[15px]">upload</span>
+                              <span>Upload Logo</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleLogoUpload}
+                              />
+                            </label>
+                            {profileForm.logoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  deleteLogo();
+                                  setProfileForm(prev => ({ ...prev, logoUrl: null, logoType: 'glow' }));
+                                  showToast("Custom logo removed. Glowing dot restored.");
+                                }}
+                                className="px-3 py-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-mono text-xs uppercase transition-colors"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mode 3: Cyber Icon Chooser */}
+                      {profileForm.logoType === 'icon' && (
+                        <div className="p-4 rounded-xl bg-[#1c1d21] border border-white/[0.05] flex flex-col gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="font-mono text-[10px] uppercase text-[#8d9194]">
+                                Material Symbol Icon Name
+                              </label>
+                              <input
+                                type="text"
+                                value={profileForm.logoIcon || 'neurology'}
+                                onChange={(e) => setProfileForm({ ...profileForm, logoIcon: e.target.value })}
+                                className="px-3 py-2 rounded-lg bg-[#141517] text-white font-mono text-xs border border-white/[0.08]"
+                                placeholder="e.g. neurology, terminal, code, smart_toy"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-mono text-[10px] uppercase text-[#8d9194]">
+                                Icon Accent Color
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={profileForm.logoColor || '#e2b6ff'}
+                                  onChange={(e) => setProfileForm({ ...profileForm, logoColor: e.target.value })}
+                                  className="px-3 py-2 rounded-lg bg-[#141517] text-white font-mono text-xs border border-white/[0.08] w-full"
+                                />
+                                <input
+                                  type="color"
+                                  value={profileForm.logoColor || '#e2b6ff'}
+                                  onChange={(e) => setProfileForm({ ...profileForm, logoColor: e.target.value })}
+                                  className="w-9 h-9 rounded-lg bg-transparent cursor-pointer border border-white/[0.1] shrink-0"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-wrap pt-1">
+                            <span className="font-mono text-[10px] text-[#8d9194] uppercase">Presets:</span>
+                            {['neurology', 'terminal', 'code', 'smart_toy', 'memory', 'speed', 'bolt', 'hub', 'all_inclusive'].map((ic) => (
+                              <button
+                                key={ic}
+                                type="button"
+                                onClick={() => setProfileForm({ ...profileForm, logoIcon: ic })}
+                                className={`px-2.5 py-1 rounded-full font-mono text-[11px] flex items-center gap-1 border transition-colors ${
+                                  (profileForm.logoIcon || 'neurology') === ic
+                                    ? 'bg-[#e2b6ff]/20 text-[#e2b6ff] border-[#e2b6ff]/40'
+                                    : 'bg-[#141517] text-[#8d9194] border-white/[0.05] hover:text-white'
+                                }`}
+                              >
+                                <span className="material-symbols-outlined text-[13px]">{ic}</span>
+                                <span>{ic}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Photo Uploader & Remover */}
                   <div className="p-5 rounded-2xl bg-[#1c1d21] border border-white/[0.06] flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -774,6 +1230,47 @@ export default function AdminDashboardPage() {
                   {/* Mockup Card */}
                   <div className="p-8 rounded-2xl bg-[#0c0c0c] text-[#e5e2e1] shadow-2xl border border-white/[0.08] flex flex-col items-center text-center relative overflow-hidden">
                     <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#6b0fa6]/25 blur-[60px] pointer-events-none rounded-full" />
+
+                    {/* Live Header Navbar Mini Ribbon (Photo 2) */}
+                    <div className="w-full flex items-center justify-between pb-3 mb-4 border-b border-white/[0.08] z-10 px-1">
+                      <div className="flex items-center gap-2">
+                        {profileForm.logoType === 'stylish-a' ? (
+                          <div className="w-5 h-5 relative rounded overflow-hidden border border-[#e2b6ff]/40 shrink-0">
+                            <Image src="/icon.svg" alt="A" fill className="object-cover" />
+                          </div>
+                        ) : profileForm.logoType === 'image' && profileForm.logoUrl ? (
+                          <div className="w-5 h-5 relative rounded overflow-hidden border border-[#e2b6ff]/40 shrink-0">
+                            <Image src={profileForm.logoUrl} alt="Logo" fill className="object-cover" />
+                          </div>
+                        ) : profileForm.logoType === 'icon' && profileForm.logoIcon ? (
+                          <span
+                            className="material-symbols-outlined text-[16px] shrink-0"
+                            style={{ color: profileForm.logoColor || '#e2b6ff' }}
+                          >
+                            {profileForm.logoIcon}
+                          </span>
+                        ) : (
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{
+                              backgroundColor: profileForm.logoColor || '#e2b6ff',
+                              boxShadow: `0 0 8px ${profileForm.logoColor || '#e2b6ff'}`
+                            }}
+                          />
+                        )}
+                        <span className="font-display font-bold text-xs tracking-tight text-white uppercase flex items-baseline gap-1">
+                          <span>{profileForm.brandTitle || profileForm.moniker || 'ANIL404'}</span>
+                          <span className="text-[#8d9194] font-light text-[10px]">
+                            {profileForm.brandSubtitle !== undefined && profileForm.brandSubtitle.trim()
+                              ? (profileForm.brandSubtitle.trim().startsWith('/') ? profileForm.brandSubtitle.trim() : `/ ${profileForm.brandSubtitle.trim()}`)
+                              : '/ AI & SOFTWARE'}
+                          </span>
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-[#1c1d21] font-mono text-[9px] text-[#e2b6ff] border border-white/[0.06]">
+                        NAVBAR
+                      </span>
+                    </div>
 
                     <span className="px-3.5 py-1 rounded-full bg-[#1c1d21] border border-[#e2b6ff]/30 text-[#e2b6ff] font-mono text-[10px] tracking-wider uppercase mb-4 z-10">
                       {profileForm.credential || "B.Tech CSE (AI & ML) // Available for Sprints"}
@@ -1296,72 +1793,375 @@ export default function AdminDashboardPage() {
           {/* TAB 5: CAPABILITIES & ACADEMICS */}
           {activeTab === 'services' && (
             <div className="flex flex-col gap-8">
-              <div>
-                <span className="font-mono text-xs text-[#e2b6ff] uppercase tracking-widest block mb-1">
-                  05 // CAPABILITIES MATRIX & ACADEMIC DEGREE
-                </span>
-                <h2 className="font-display font-bold text-2xl text-white">
-                  5 Engineering Domains & Degree Specialization
-                </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="font-mono text-xs text-[#e2b6ff] uppercase tracking-widest block mb-1">
+                    05 // CAPABILITIES MATRIX & ACADEMIC DEGREE
+                  </span>
+                  <h2 className="font-display font-bold text-2xl text-white">
+                    Skills Capabilities & Degree Specialization
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleAddCapability}
+                    className="px-4 py-2.5 rounded-full bg-[#1c1d21] hover:bg-[#24252a] text-[#e2b6ff] font-mono text-xs uppercase tracking-wider font-semibold transition-all flex items-center gap-1.5 border border-[#e2b6ff]/30 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <span>Add Capability Domain</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSkillsAcademicSave}
+                    className="px-6 py-2.5 rounded-full bg-[#e2b6ff] text-[#4d007b] font-mono text-xs uppercase tracking-wider font-bold hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(226,182,255,0.3)]"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">save</span>
+                    <span>Save Skills & Academics</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Academic Degree Module */}
-              <div className="p-6 rounded-3xl bg-[#141517] border border-[#e2b6ff]/30 flex flex-col gap-4 shadow-xl">
-                <span className="font-mono text-xs text-[#e2b6ff] uppercase tracking-wider font-bold">
-                  ACADEMIC DEGREE // HONOURS PURSUIT
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="font-mono text-xs text-[#8d9194] uppercase">Degree Title</label>
+              {/* 1. Academic Degree Module */}
+              <div className="p-7 rounded-3xl bg-[#141517] border border-[#e2b6ff]/30 flex flex-col gap-6 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#6b0fa6]/30 border border-[#e2b6ff]/40 flex items-center justify-center text-[#e2b6ff]">
+                      <span className="material-symbols-outlined text-2xl">school</span>
+                    </div>
+                    <div>
+                      <span className="font-mono text-xs text-[#e2b6ff] uppercase tracking-wider font-bold block">
+                        ACADEMIC DEGREE // HONOURS PURSUIT
+                      </span>
+                      <span className="font-body text-xs text-[#8d9194]">
+                        Editable degree credential, specialization, and research milestones displayed on portfolio
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-[#1c1d21] text-[#e2b6ff] font-mono text-xs border border-white/[0.08] self-start sm:self-auto">
+                    {academicForm.status || 'Active Pursuit'}
+                  </span>
+                </div>
+
+                {/* Primary Academic Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="font-mono text-xs text-[#c4c7ca] uppercase tracking-wider">
+                      Degree Title
+                    </label>
                     <input
                       type="text"
-                      value={data.academic.degree}
-                      onChange={(e) => updateAcademic({ ...data.academic, degree: e.target.value })}
-                      className="px-4 py-2.5 rounded-xl bg-[#1c1d21] text-white font-display font-bold text-sm focus:outline-none"
+                      value={academicForm.degree || ''}
+                      onChange={(e) => setAcademicForm({ ...academicForm, degree: e.target.value })}
+                      placeholder="e.g. Bachelor of Technology in Computer Science & Engineering"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-display font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.08]"
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="font-mono text-xs text-[#8d9194] uppercase">Specialization</label>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="font-mono text-xs text-[#c4c7ca] uppercase tracking-wider">
+                      Specialization Track
+                    </label>
                     <input
                       type="text"
-                      value={data.academic.specialization}
-                      onChange={(e) => updateAcademic({ ...data.academic, specialization: e.target.value })}
-                      className="px-4 py-2.5 rounded-xl bg-[#1c1d21] text-[#e2b6ff] font-mono text-xs focus:outline-none"
+                      value={academicForm.specialization || ''}
+                      onChange={(e) => setAcademicForm({ ...academicForm, specialization: e.target.value })}
+                      placeholder="e.g. Artificial Intelligence & Machine Learning"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-[#e2b6ff] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.08]"
                     />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="font-mono text-xs text-[#c4c7ca] uppercase tracking-wider">
+                      Academic Status Pill
+                    </label>
+                    <input
+                      type="text"
+                      value={academicForm.status || ''}
+                      onChange={(e) => setAcademicForm({ ...academicForm, status: e.target.value })}
+                      placeholder="e.g. In Pursuit // Engineering Honours"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="font-mono text-xs text-[#c4c7ca] uppercase tracking-wider">
+                      Honours Distinction Title
+                    </label>
+                    <input
+                      type="text"
+                      value={academicForm.honours || ''}
+                      onChange={(e) => setAcademicForm({ ...academicForm, honours: e.target.value })}
+                      placeholder="e.g. Engineering Honours"
+                      className="px-4 py-3 rounded-xl bg-[#1c1d21] text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                    />
+                  </div>
+                </div>
+
+                {/* Sub-lists: Core Academic Focus & Research Initiatives */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/[0.08]">
+                  {/* Core Focus List */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#e2b6ff] text-base">check_circle</span>
+                        <span className="font-mono text-xs uppercase tracking-wider text-white font-bold">
+                          Core Academic Focus ({academicForm.coreFocus?.length || 0})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddCoreFocus}
+                        className="px-2.5 py-1 rounded-full bg-[#1c1d21] hover:bg-[#24252a] text-[#e2b6ff] font-mono text-[11px] uppercase transition-colors flex items-center gap-1 border border-white/[0.08]"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">add</span>
+                        <span>Add Focus</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {(academicForm.coreFocus || []).map((focus, fIdx) => (
+                        <div key={fIdx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={focus}
+                            onChange={(e) => handleUpdateCoreFocus(fIdx, e.target.value)}
+                            className="flex-1 px-3.5 py-2 rounded-xl bg-[#1c1d21] text-white font-body text-xs focus:outline-none focus:ring-1 focus:ring-[#e2b6ff] border border-white/[0.06]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCoreFocus(fIdx)}
+                            className="p-2 rounded-lg bg-[#1c1d21] hover:bg-red-500/20 text-[#8d9194] hover:text-red-400 transition-colors"
+                            title="Remove bullet"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Research Initiatives List */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#e2b6ff] text-base">terminal</span>
+                        <span className="font-mono text-xs uppercase tracking-wider text-white font-bold">
+                          Research Initiatives & Interests ({academicForm.researchInitiatives?.length || 0})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddResearch}
+                        className="px-2.5 py-1 rounded-full bg-[#1c1d21] hover:bg-[#24252a] text-[#e2b6ff] font-mono text-[11px] uppercase transition-colors flex items-center gap-1 border border-white/[0.08]"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">add</span>
+                        <span>Add Research</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {(academicForm.researchInitiatives || []).map((research, rIdx) => (
+                        <div key={rIdx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={research}
+                            onChange={(e) => handleUpdateResearch(rIdx, e.target.value)}
+                            className="flex-1 px-3.5 py-2 rounded-xl bg-[#1c1d21] text-white font-body text-xs focus:outline-none focus:ring-1 focus:ring-[#e2b6ff] border border-white/[0.06]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteResearch(rIdx)}
+                            className="p-2 rounded-lg bg-[#1c1d21] hover:bg-red-500/20 text-[#8d9194] hover:text-red-400 transition-colors"
+                            title="Remove bullet"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* 5 Domains Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.capabilities.map((cap) => (
-                  <div key={cap.id} className="p-6 rounded-2xl bg-[#141517] border border-white/[0.08] flex flex-col gap-3 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-full bg-[#1c1d21] text-[#e2b6ff] font-mono text-xs font-bold">
-                        {cap.number}
-                      </span>
-                      <span className="material-symbols-outlined text-[#e2b6ff]">{cap.icon}</span>
+              {/* 2. Engineering Capabilities & Domain Skills Grid */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs uppercase tracking-wider text-[#8d9194] font-semibold">
+                    ENGINEERING DOMAIN CAPABILITIES ({capabilitiesForm.length} DOMAINS ACTIVE)
+                  </span>
+                  <span className="font-mono text-[11px] text-[#e2b6ff]">
+                    Directly synced with Skills section on public site
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {capabilitiesForm.map((cap, capIdx) => (
+                    <div 
+                      key={cap.id || capIdx} 
+                      className="p-6 rounded-2xl bg-[#141517] border border-white/[0.08] flex flex-col gap-4 shadow-sm hover:border-[#e2b6ff]/30 transition-colors"
+                    >
+                      {/* Card Header: Number, Icon & Delete */}
+                      <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] text-[#8d9194] uppercase">NO:</span>
+                            <input
+                              type="text"
+                              value={cap.number || ''}
+                              onChange={(e) => {
+                                const updated = capabilitiesForm.map(c => c.id === cap.id ? { ...c, number: e.target.value } : c);
+                                setCapabilitiesForm(updated);
+                              }}
+                              className="w-12 px-2 py-1 rounded-lg bg-[#1c1d21] text-[#e2b6ff] font-mono text-xs font-bold text-center border border-white/[0.08] focus:outline-none focus:ring-1 focus:ring-[#e2b6ff]"
+                            />
+                          </div>
+
+                          {/* Icon Badge & Selector */}
+                          <div className="flex items-center gap-2 pl-2 border-l border-white/[0.08]">
+                            <div className="w-8 h-8 rounded-lg bg-[#6b0fa6]/30 border border-[#e2b6ff]/30 flex items-center justify-center text-[#e2b6ff] shrink-0">
+                              <span className="material-symbols-outlined text-[18px]">{cap.icon || 'smart_toy'}</span>
+                            </div>
+                            <input
+                              type="text"
+                              value={cap.icon || ''}
+                              placeholder="icon name"
+                              onChange={(e) => {
+                                const updated = capabilitiesForm.map(c => c.id === cap.id ? { ...c, icon: e.target.value } : c);
+                                setCapabilitiesForm(updated);
+                              }}
+                              className="w-28 px-2.5 py-1 rounded-lg bg-[#1c1d21] text-white font-mono text-[11px] border border-white/[0.08] focus:outline-none focus:ring-1 focus:ring-[#e2b6ff]"
+                              title="Material Symbol Icon Name"
+                            />
+                          </div>
+                        </div>
+
+                        {capabilitiesForm.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCapability(cap.id)}
+                            className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 font-mono text-[10px] uppercase tracking-wider transition-colors flex items-center gap-1"
+                            title="Delete capability card"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">delete</span>
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Icon Preset Suggestions */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-[9px] text-[#8d9194] uppercase">Icon Presets:</span>
+                        {['smart_toy', 'dataset', 'web', 'dns', 'psychology_alt', 'terminal', 'speed', 'memory', 'code', 'hub'].map((presetIcon) => (
+                          <button
+                            key={presetIcon}
+                            type="button"
+                            onClick={() => {
+                              const updated = capabilitiesForm.map(c => c.id === cap.id ? { ...c, icon: presetIcon } : c);
+                              setCapabilitiesForm(updated);
+                            }}
+                            className={`p-1 rounded-md text-[13px] material-symbols-outlined transition-colors ${
+                              cap.icon === presetIcon 
+                                ? 'bg-[#e2b6ff] text-[#4d007b]' 
+                                : 'bg-[#1c1d21] text-[#8d9194] hover:text-white'
+                            }`}
+                            title={presetIcon}
+                          >
+                            {presetIcon}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Domain Title */}
+                      <div className="flex flex-col gap-1">
+                        <label className="font-mono text-[10px] uppercase tracking-wider text-[#8d9194]">
+                          Domain Title
+                        </label>
+                        <input
+                          type="text"
+                          value={cap.title || ''}
+                          placeholder="e.g. Artificial Intelligence & Deep Learning"
+                          onChange={(e) => {
+                            const updated = capabilitiesForm.map(c => c.id === cap.id ? { ...c, title: e.target.value } : c);
+                            setCapabilitiesForm(updated);
+                          }}
+                          className="px-3.5 py-2.5 rounded-xl bg-[#1c1d21] font-display font-bold text-base text-white focus:outline-none focus:ring-1 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                        />
+                      </div>
+
+                      {/* Domain Description */}
+                      <div className="flex flex-col gap-1">
+                        <label className="font-mono text-[10px] uppercase tracking-wider text-[#8d9194]">
+                          Technical Description & Workloads
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={cap.description || ''}
+                          placeholder="Provide details about frameworks, mathematical models, or architectures..."
+                          onChange={(e) => {
+                            const updated = capabilitiesForm.map(c => c.id === cap.id ? { ...c, description: e.target.value } : c);
+                            setCapabilitiesForm(updated);
+                          }}
+                          className="p-3 rounded-xl bg-[#1c1d21] text-xs font-body text-[#c4c7ca] leading-relaxed focus:outline-none focus:ring-1 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                        />
+                      </div>
+
+                      {/* Domain Tags / Badges */}
+                      <div className="flex flex-col gap-1.5 pt-2 border-t border-white/[0.06]">
+                        <label className="font-mono text-[10px] uppercase tracking-wider text-[#8d9194] flex items-center justify-between">
+                          <span>Technology & Framework Tags (Comma separated)</span>
+                          <span className="text-[#e2b6ff]">{cap.tags?.length || 0} badges</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={cap.tags ? cap.tags.join(', ') : ''}
+                          placeholder="e.g. PyTorch, HuggingFace, LoRA, Transformers"
+                          onChange={(e) => {
+                            const tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                            const updated = capabilitiesForm.map(c => c.id === cap.id ? { ...c, tags } : c);
+                            setCapabilitiesForm(updated);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-[#1c1d21] text-[#e2b6ff] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#e2b6ff] border border-white/[0.08]"
+                        />
+
+                        {/* Live Badges Preview */}
+                        {cap.tags && cap.tags.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                            {cap.tags.map((tag, tIdx) => (
+                              <span 
+                                key={tIdx}
+                                className="px-2 py-0.5 rounded-full bg-[#1c1d21] text-[10px] font-mono text-[#c4c7ca] border border-white/[0.06]"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <input
-                      type="text"
-                      value={cap.title}
-                      onChange={(e) => {
-                        const updated = data.capabilities.map(c => c.id === cap.id ? { ...c, title: e.target.value } : c);
-                        updateCapabilities(updated);
-                      }}
-                      className="font-display font-bold text-lg text-white bg-transparent focus:outline-none"
-                    />
-                    <textarea
-                      rows={3}
-                      value={cap.description}
-                      onChange={(e) => {
-                        const updated = data.capabilities.map(c => c.id === cap.id ? { ...c, description: e.target.value } : c);
-                        updateCapabilities(updated);
-                      }}
-                      className="p-3 rounded-xl bg-[#1c1d21] text-xs font-body text-[#c4c7ca] focus:outline-none"
-                    />
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Action Save Bar */}
+              <div className="p-6 rounded-2xl bg-[#141517] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#3ECF8E] animate-pulse" />
+                  <span className="font-mono text-xs uppercase tracking-wider text-[#c4c7ca]">
+                    Changes persist locally and sync to Supabase PostgreSQL database
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSkillsAcademicSave}
+                  className="w-full sm:w-auto px-8 py-3 rounded-full bg-[#e2b6ff] text-[#4d007b] font-mono text-xs uppercase tracking-wider font-bold hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(226,182,255,0.3)]"
+                >
+                  <span className="material-symbols-outlined text-[18px]">save</span>
+                  <span>Save Skills & Academics & Sync DB</span>
+                </button>
               </div>
             </div>
           )}

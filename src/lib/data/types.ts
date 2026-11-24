@@ -13,6 +13,12 @@ export interface ProfileConfig {
     value: string;
     sub?: string;
   }[];
+  brandTitle?: string;
+  brandSubtitle?: string;
+  logoType?: 'glow' | 'image' | 'icon' | 'stylish-a';
+  logoUrl?: string | null;
+  logoIcon?: string;
+  logoColor?: string;
 }
 
 export interface SocialLink {

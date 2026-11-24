@@ -11,6 +11,12 @@ export const initialPortfolioData: PortfolioData = {
     avatarUrl: "https://lh3.googleusercontent.com/aida/ALJJyrC3PFGKDFq7-ISaWez-idAkXjFXaDifIgVp5e5DXwIFLyqW1ypvr3g7fwK1ywNEhJtvOGW7ePtVqykRU1qMFimWjDWfsxqJJIJmWpnk-MVCQIylPfHkiq-AxS-WsOK259XcIqXKe3QGeqxq0ApEZ19LMnKdUbzFjeRhK2GrKDl3qhssAJyjoU4h8C5w7-IHOryRNc6dsChIrmxuQa5SMIdwQjySC-Vf6oqsDMR1CZ8I2g",
     email: "anilkumarrout2005@gmail.com",
     location: "Bhubaneswar / Remote",
+    brandTitle: "ANIL404",
+    brandSubtitle: "AI & SOFTWARE",
+    logoType: "stylish-a",
+    logoUrl: null,
+    logoIcon: "neurology",
+    logoColor: "#e2b6ff",
     stats: [
       { label: "B.Tech", value: "CSE (AI & ML)" },
       { label: "15+", value: "AI & Full-Stack Projects" },

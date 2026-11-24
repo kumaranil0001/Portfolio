@@ -20,6 +20,7 @@ interface PortfolioContextType {
   saveAllData: (updated: PortfolioData) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (profileUpdates: Partial<ProfileConfig>) => void;
   deleteAvatar: () => void;
+  deleteLogo: () => void;
   updateSocials: (socials: SocialLink[]) => void;
   updateTechStack: (stack: TechStackItem[]) => void;
   addTechStack: (item: TechStackItem) => void;
@@ -167,6 +168,17 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       profile: {
         ...data.profile,
         avatarUrl: null
+      }
+    };
+    persistState(updated);
+  };
+
+  const deleteLogo = () => {
+    const updated: PortfolioData = {
+      ...data,
+      profile: {
+        ...data.profile,
+        logoUrl: null
       }
     };
     persistState(updated);
@@ -360,6 +372,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         saveAllData,
         updateProfile,
         deleteAvatar,
+        deleteLogo,
         updateSocials,
         updateTechStack,
         addTechStack,

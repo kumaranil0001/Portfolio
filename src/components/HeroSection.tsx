@@ -67,7 +67,7 @@ export function HeroSection() {
         <div className="flex flex-col items-start text-left max-w-4xl z-10">
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1c1d21]/90 border border-white/[0.1] mb-6 backdrop-blur-md">
             <span className="font-mono text-xs uppercase tracking-widest text-[#e2b6ff] font-semibold">
-              BRAND: {data.profile.moniker || 'ANIL404'}
+              BRAND: {data.profile.brandTitle || data.profile.moniker || 'ANIL404'}
             </span>
             <span className="text-[#8d9194] text-xs">•</span>
             <span className="font-mono text-xs uppercase tracking-widest text-[#c4c7ca]">

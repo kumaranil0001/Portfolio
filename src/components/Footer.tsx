@@ -12,7 +12,7 @@ export function Footer() {
       <div className="w-full px-4 sm:px-8 lg:px-16 max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="flex flex-col items-center md:items-start gap-1.5 text-center md:text-left">
           <span className="font-display text-xl font-bold text-white tracking-tight">
-            {data.profile.moniker} — {data.profile.name}
+            {data.profile.brandTitle || data.profile.moniker} — {data.profile.name}
           </span>
           <span className="font-body text-xs sm:text-sm text-[#8d9194]">
             {data.academic.degree.split(' ')[0]} {data.academic.specialization} • Deep Learning • Distributed Systems
